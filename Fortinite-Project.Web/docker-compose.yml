@@ -1,0 +1,11 @@
+services:
+  fortnite-api:  # Alteramos o nome do serviço para forçar o reset
+    build: .
+    container_name: fortnite_app
+    ports:
+      - "5001:8080"
+    volumes:
+      - ./database:/app/data
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DatabaseConnection=Data Source=/app/data/fortnite.db
