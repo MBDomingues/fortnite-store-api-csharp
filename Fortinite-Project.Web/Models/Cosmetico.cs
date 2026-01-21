@@ -1,9 +1,12 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
+namespace Fortinite_Project.Web.Models;
 public class Cosmetico
 {   
     [Key]
-    public int Id { get; set; }
+    [DatabaseGenerated(DatabaseGeneratedOption.None)]
+    public string? Id { get; set; }
 
     [MaxLength(100)]
     public string Nome { get; set; }
@@ -17,4 +20,10 @@ public class Cosmetico
     public bool isBundle { get; set; } = false;
     public string bundleItemsJson { get; set; } = "[]";
     public string coresJson { get; set; } = "[]";
-}
+    
+    [InverseProperty("Cosmetico")]
+    public List<HistoricoTransacao> HistoricoTransacao { get; set; } = new();
+
+    [InverseProperty("Cosmetico")]
+    public List<ItemAdquirido> ItemAdquirido { get; set; } = new();
+    }

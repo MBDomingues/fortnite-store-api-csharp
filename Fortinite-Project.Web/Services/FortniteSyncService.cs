@@ -1,10 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using Fortinite_Project.Web.Data;
 using Fortinite_Project.Web.Models;
-using Microsoft.Extensions.Logging;
 using Fortinite_Project.Web.DTOs;
 
 namespace Fortinite_Project.Web.Services;
+
 public class FortniteSyncService : IFortniteSyncService
 {
     private readonly AppDbContext _dbContext;
@@ -34,7 +34,7 @@ public class FortniteSyncService : IFortniteSyncService
         var count = await _dbContext.Cosmeticos.CountAsync();
         if (count > 0)
         {
-            _logger.LogInformation("Banco já populado. Atualizando loja...");
+            _logger.LogInformation("Banco já populado ({Count} itens). Atualizando loja...", count);
             await SyncShopAndNewStatusAsync();
             return;
         }
@@ -44,86 +44,105 @@ public class FortniteSyncService : IFortniteSyncService
 
     public async Task SyncAllBaseCosmeticsAsync()
     {
+        // Cache de IDs em memória para performance extrema
+        var existingIds = await _dbContext.Cosmeticos.Select(c => c.Id).ToHashSetAsync();
+
         foreach (var url in _urlsApi)
         {
             try 
             {
+                _logger.LogInformation($"Sincronizando: {url}");
                 var response = await _httpClient.GetFromJsonAsync<FortniteApiResponse_DTO>(url);
-                if (response?.Data == null)
+                
+                if (response?.Data == null || response.Data.Count == 0)
                 {
-                    _logger.LogWarning($"Nenhum dado retornado da URL {url}");
+                    _logger.LogWarning($"Nenhum dado retornado ou mapeado da URL {url}. Verifique os DTOs.");
                     continue;
                 }
 
+                int novosItens = 0;
                 foreach (var dto in response.Data)
                 {
-                    await SaveOrUpdateCosmeticoAsync(dto);
+                    if (!existingIds.Contains(dto.Id))
+                    {
+                        var novo = new Cosmetico 
+                        { 
+                            Id = dto.Id,
+                            
+                            Nome = dto.Nome ?? "Sem Nome",
+                            
+                            Descricao = dto.Descricao ?? "",
+                            
+                            UrlImagem = dto.Images?.Small ?? dto.Images?.Large ?? dto.Images?.Icon ?? "",
+                            
+                            Tipo = dto.TypeInfo?.DisplayValue ?? dto.TypeInfo?.Value ?? "Desconhecido",
+                            
+                            Raridade = dto.Rarity?.DisplayValue ?? dto.Series?.Value ?? "Comum",
+                            
+                            Preco = dto.Preco,
+                            dataInclusao = dto.dataInclusao,
+                            isForSale = false 
+                        };
+                        
+                        await _dbContext.Cosmeticos.AddAsync(novo);
+                        existingIds.Add(dto.Id);
+                        novosItens++;
+                    }
                 }
-                await _dbContext.SaveChangesAsync();
+
+                if (novosItens > 0)
+                {
+                    await _dbContext.SaveChangesAsync();
+                    _logger.LogInformation($"Sucesso: {novosItens} novos itens adicionados da URL {url}");
+                }
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Erro na URL {url}: {ex.Message}");
+                _logger.LogError($"Erro crítico na URL {url}: {ex.Message}");
             }
         }
     }
 
-    private async Task SaveOrUpdateCosmeticoAsync(CosmeticoApi_DTO dto)
-    {
-        var existing = await _dbContext.Cosmeticos.FindAsync(dto.Id);
-        var cosmetico = existing ?? new Cosmetico { Id = dto.Id };
-
-        cosmetico.Nome = dto.Nome;
-        cosmetico.Descricao = dto.Descricao;
-        cosmetico.UrlImagem = dto.UrlImagem;
-        cosmetico.Tipo = dto.Tipo;
-        cosmetico.Raridade = dto.Raridade;
-        cosmetico.Preco = dto.Preco;
-        cosmetico.isForSale = dto.isForSale;
-        cosmetico.dataInclusao = dto.dataInclusao;
-        cosmetico.isBundle = dto.isBundle;
-        cosmetico.bundleItemsJson = dto.bundleItemsJson;
-        cosmetico.coresJson = dto.coresJson;
-
-        if (existing == null)
-        {
-            await _dbContext.Cosmeticos.AddAsync(cosmetico);
-        }
-        else
-        {
-            _dbContext.Cosmeticos.Update(cosmetico);
-        }
-    }
-
-
     public async Task SyncShopAndNewStatusAsync()
     {
-        await _dbContext.Database.ExecuteSqlRawAsync("UPDATE Cosmeticos SET IsForSale = 0, IsNew = 0");
+        _logger.LogInformation("Iniciando sincronização da Loja Diária...");
+        
+        // Reset de status
+        await _dbContext.Database.ExecuteSqlRawAsync("UPDATE Cosmeticos SET isForSale = 0");
+
         try
         {
             var shopResponse = await _httpClient.GetFromJsonAsync<FortniteShopResponse_DTO>("https://fortnite-api.com/v2/shop?language=pt-BR");
             
             if (shopResponse?.Data == null)
             {
-                _logger.LogWarning("Nenhum dado retornado da loja.");
+                _logger.LogWarning("Loja retornou vazia.");
                 return;
             }
             
+            int atualizados = 0;
             foreach (var shopItem in shopResponse.Data)
             {
-                foreach (var featured in shopItem.Featured)
+                // A loja costuma ter 'brItems' ou 'granted' dentro de featured
+                if (shopItem.Featured != null)
                 {
-                    var cosmetico = await _dbContext.Cosmeticos.FindAsync(featured.Id);
-                    if (cosmetico != null)
+                    foreach (var entry in shopItem.Featured)
                     {
-                        cosmetico.isForSale = true;
-                        _dbContext.Cosmeticos.Update(cosmetico);
+                        var cosmetico = await _dbContext.Cosmeticos.FindAsync(entry.Id);
+                        if (cosmetico != null)
+                        {
+                            cosmetico.isForSale = true;
+                            atualizados++;
+                        }
                     }
                 }
             }
+            
             await _dbContext.SaveChangesAsync();
+            _logger.LogInformation($"Loja atualizada: {atualizados} itens disponíveis para venda.");
 
-        }catch (Exception ex)
+        }
+        catch (Exception ex)
         {
             _logger.LogError($"Erro ao sincronizar loja: {ex.Message}");
         }
