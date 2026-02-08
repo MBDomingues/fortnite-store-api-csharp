@@ -1,0 +1,79 @@
+
+@model string
+@{
+    // O @Model aqui será o prefixo que passarmos (ex: "shop", "all", "my-items")
+    var prefix = Model;
+}
+
+<div class="shop-filters mb-4 p-3" style="background: rgba(255,255,255,0.05); border-radius: 15px; border: 1px solid var(--border-color);">
+    <div class="row g-3">
+        <div class="col-md-4">
+            <label class="form-label text-light">Nome</label>
+            <input type="text" id="@(prefix)-searchInput" class="form-control" placeholder="Buscar...">
+        </div>
+
+        <div class="col-md-4">
+            <label class="form-label text-light">Tipo</label>
+            <select class="form-select" id="@(prefix)-typeFilter">
+                <option value="">Todos</option>
+                <option value="outfit">Skin (Traje)</option>
+                <option value="backpack">Mochila</option>
+                <option value="pickaxe">Picareta</option>
+                <option value="glider">Asa Delta</option>
+                <option value="emote">Gesto</option>
+                <option value="wrap">Envelopamento</option>
+                <option value="shoes">Sapatos</option>
+                <option value="pet">Mascote</option>
+                <option value="contrail">Rastro de Fumaça</option>
+                <option value="banner">Estandarte</option>
+                <option value="chassis">Chassi</option>
+                <option value="wheel">Roda</option>
+                <option value="decal">Decalque</option>
+                <option value="music">Pacote de Música</option>
+                <option value="loading">Tela de Carregamento</option>
+            </select>
+        </div>
+
+        <div class="col-md-4">
+            <label class="form-label text-light">Raridade</label>
+            <select class="form-select" id="@(prefix)-rarityFilter">
+                <option value="">Todas</option>
+                <option value="legendary">Lendário</option>
+                <option value="epic">Épico</option>
+                <option value="rare">Raro</option>
+                <option value="uncommon">Incomum</option>
+                <option value="common">Comum</option>
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label text-light">Data Início</label>
+            <input type="date" id="@(prefix)-dateStart" class="form-control">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label text-light">Data Fim</label>
+            <input type="date" id="@(prefix)-dateEnd" class="form-control">
+        </div>
+
+        <div class="col-md-4 d-flex align-items-end gap-3 flex-wrap">
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="@(prefix)-checkNew">
+                <label class="form-check-label text-light" for="@(prefix)-checkNew">Novos</label>
+            </div>
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="@(prefix)-checkForSale">
+                <label class="form-check-label text-light" for="@(prefix)-checkForSale">À Venda</label>
+            </div>
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="@(prefix)-checkPromo">
+                <label class="form-check-label text-light" for="@(prefix)-checkPromo">Promo</label>
+            </div>
+        </div>
+
+        <div class="col-md-2 d-flex align-items-end">
+            <button id="@(prefix)-clearFilters" class="btn btn-outline-light w-100">
+                <i class="bi bi-x-circle"></i> Limpar
+            </button>
+        </div>
+    </div>
+</div>

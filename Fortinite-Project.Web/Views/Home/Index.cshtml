@@ -1,8 +1,241 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Loja Oficial";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="container py-4">
+    <h2 class="section-title">Pacotões do dia</h2>
+    <div id="featuredCarousel" class="carousel slide" data-bs-ride="carousel">
+        <div class="carousel-indicators"></div>
+        <div class="carousel-inner" id="carouselItems">
+            <div class="text-center py-5">
+                <div class="spinner-border text-light" role="status"></div>
+                <p class="text-muted mt-2">Carregando destaques...</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="carousel-external-controls" class="d-flex justify-content-center align-items-center gap-3 mt-4" style="display: none;">
+        <button class="btn-external-nav" type="button" data-bs-target="#featuredCarousel" data-bs-slide="prev">
+            <i class="bi bi-chevron-left"></i>
+        </button>
+        <button class="btn-external-nav" type="button" data-bs-target="#featuredCarousel" data-bs-slide="next">
+            <i class="bi bi-chevron-right"></i>
+        </button>
+    </div>
+
+    <ul class="nav nav-tabs nav-tabs-custom justify-content-center mt-5" id="shopTabs" role="tablist">
+        <li class="nav-item">
+            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#shop-content">
+                <i class="bi bi-cart3"></i> Loja
+            </button>
+        </li>
+        <li class="nav-item" id="my-items-tab-container" style="display: none;">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#my-items-content">
+                <i class="bi bi-collection-fill"></i> Meus Itens
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#all-items-content">
+                <i class="bi bi-grid-3x3-gap"></i> Catálogo Completo
+            </button>
+        </li>
+        <li class="nav-item" id="users-tab-container" style="display: none;">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#users-content">
+                <i class="bi bi-people"></i> Usuários
+            </button>
+        </li>
+    </ul>
+    
+    <div class="shop-section">
+        <div class="tab-content" id="shopTabContent">
+            
+            <div class="tab-pane fade show active" id="shop-content">
+                <h2 class="section-title mt-4">Loja de Itens</h2>
+                
+                @await Html.PartialAsync("_ShopFilters", "shop") 
+                
+                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4 products-grid" id="shop-grid">
+                    <div class="col-12 text-center py-5">
+                        <div class="spinner-border text-light" role="status"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="my-items-content">
+                <h2 class="section-title mt-4">Inventário</h2>
+                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4 products-grid" id="my-items-grid">
+                    <div class="col-12 text-center text-muted py-5">Nenhum item carregado.</div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="all-items-content">
+                <h2 class="section-title mt-4">Todos os Cosméticos</h2>
+                
+                @await Html.PartialAsync("_ShopFilters", "all")
+
+                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4 products-grid" id="all-items-grid">
+                    <div class="col-12 text-center py-5">
+                        <div class="spinner-border text-light" role="status"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="users-content">
+                <h2 class="section-title mt-4">Gestão de Usuários</h2>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-12">
+                        <input type="text" class="form-control" id="userSearchInput" placeholder="Buscar por nome ou email...">
+                    </div>
+                </div>
+                <div class="users-list" id="users-list"></div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<div class="modal fade" id="itemModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-box-seam"></i> Detalhes do Item</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="item-modal-image" id="modal-item-image">
+                    <div class="item-modal-badges">
+                        <span class="badge bg-primary" id="modal-item-badge-new" style="display: none;"></span>
+                        <span class="badge bg-success" id="modal-item-badge-sale" style="display: none;"></span>
+                    </div>
+                    <div class="item-modal-rarity">
+                        <span class="badge" id="modal-item-rarity"></span>
+                    </div>
+                </div>
+                
+                <div class="item-availability mt-3" id="modal-item-availability">
+                    <i class="bi bi-check-circle-fill"></i>
+                    <div>
+                        <strong id="modal-availability-title">Disponível</strong>
+                        <div id="modal-availability-text">Disponível para compra</div>
+                    </div>
+                </div>
+
+                <div class="item-modal-header-content mb-3">
+                    <div class="item-title-section">
+                        <h3 id="modal-item-name"></h3>
+                        <div class="item-type-label">
+                            <i class="bi bi-tag" id="modal-item-type-icon"></i>
+                            <span id="modal-item-type"></span>
+                        </div>
+                    </div>
+                    <div class="item-price-section">
+                        <span class="item-price-large" id="modal-item-price"></span>
+                        <div class="item-price-label">V-Bucks</div>
+                    </div>
+                </div>
+
+                <div class="item-info-section">
+                    <h5><i class="bi bi-info-circle"></i> Descrição</h5>
+                    <p class="item-description" id="modal-item-description"></p>
+                </div>
+
+                <div class="item-info-section">
+                    <div class="item-details-grid">
+                        <div class="item-detail-card">
+                            <div class="item-detail-label">Raridade</div>
+                            <div class="item-detail-value" id="modal-detail-rarity"></div>
+                        </div>
+                        <div class="item-detail-card">
+                            <div class="item-detail-label">Tipo</div>
+                            <div class="item-detail-value" id="modal-detail-category"></div>
+                        </div>
+                        <div class="item-detail-card">
+                            <div class="item-detail-label">Entrada</div>
+                            <div class="item-detail-value" id="modal-detail-date"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="item-actions w-100">
+                    <button type="button" class="btn-buy-item" id="btn-buy">
+                        <i class="bi bi-cart-plus"></i> <span>Comprar Agora</span>
+                    </button>
+                    <button type="button" class="btn-devolver-item" id="btn-devolver" style="display: none;">
+                        <i class="bi bi-arrow-counterclockwise"></i> <span>Devolver</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="userProfileModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-person-circle"></i> Perfil</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-3">
+                <div class="text-center">
+                    <div class="profile-avatar-large" id="modal-avatar"></div>
+                    <h3 id="modal-user-name"></h3>
+                </div>
+                <div class="profile-stats">
+                    <div class="stat-card">
+                        <span class="stat-value" id="stat-items">0</span>
+                        <span class="stat-label">Itens</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-value" id="stat-vbucks">0</span>
+                        <span class="stat-label">V-Bucks</span>
+                    </div>
+                </div>
+                <div class="profile-info-section">
+                    <h5><i class="bi bi-envelope"></i> Email</h5>
+                    <span class="profile-info-value" id="modal-user-email"></span>
+                </div>
+                <div class="profile-info-section">
+                    <ul class="nav nav-tabs profile-modal-tabs" id="profileTabs" role="tablist">
+                        <li class="nav-item">
+                            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#profile-tab-items">
+                                <i class="bi bi-box-seam"></i> Inventário
+                            </button>
+                        </li>
+                    </ul>
+                    <div class="tab-content mt-3">
+                        <div class="tab-pane fade show active" id="profile-tab-items">
+                            <div class="user-items-preview" id="modal-user-items"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/vitrine.js" asp-append-version="true"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                if (typeof localStorageManager !== 'undefined') {
+
+                    const user = localStorageManager.getToken(); 
+                    console.log("Index iniciando com usuário:", user);
+                    
+                    if (typeof VitrineJS !== 'undefined') {
+                        const minhaVitrine = new VitrineJS(user);
+                    } else {
+                        console.error("Erro: Classe VitrineJS não encontrada.");
+                    }
+                } else {
+                    console.warn("localStorageManager não definido. Verifique perfil.js no Layout.");
+                }
+            } catch (e) {
+                console.error("Erro ao inicializar Home:", e);
+            }
+        });
+    </script>
+}

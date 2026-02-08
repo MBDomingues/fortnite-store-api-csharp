@@ -107,31 +107,37 @@ public class FortniteSyncService : IFortniteSyncService
     {
         _logger.LogInformation("Iniciando sincronização da Loja Diária...");
         
-        // Reset de status
+        // 1. Reseta tudo para não estar à venda
         await _dbContext.Database.ExecuteSqlRawAsync("UPDATE Cosmeticos SET isForSale = 0");
 
         try
         {
             var shopResponse = await _httpClient.GetFromJsonAsync<FortniteShopResponse_DTO>("https://fortnite-api.com/v2/shop?language=pt-BR");
             
-            if (shopResponse?.Data == null)
+            if (shopResponse?.Data?.Entries == null)
             {
-                _logger.LogWarning("Loja retornou vazia.");
+                _logger.LogWarning("Loja retornou vazia ou estrutura mudou.");
                 return;
             }
             
             int atualizados = 0;
-            foreach (var shopItem in shopResponse.Data)
+            HashSet<string> idsNaLoja = new();
+
+            foreach (var entry in shopResponse.Data.Entries)
             {
-                // A loja costuma ter 'brItems' ou 'granted' dentro de featured
-                if (shopItem.Featured != null)
+                var itensDaEntrada = (entry.Items ?? new List<CosmeticoApi_DTO>())
+                                    .Concat(entry.BrItems ?? new List<CosmeticoApi_DTO>());
+
+                foreach (var itemApi in itensDaEntrada)
                 {
-                    foreach (var entry in shopItem.Featured)
+                    if (!idsNaLoja.Contains(itemApi.Id))
                     {
-                        var cosmetico = await _dbContext.Cosmeticos.FindAsync(entry.Id);
+                        var cosmetico = await _dbContext.Cosmeticos.FindAsync(itemApi.Id);
                         if (cosmetico != null)
                         {
                             cosmetico.isForSale = true;
+                            cosmetico.Preco = entry.FinalPrice;
+                            idsNaLoja.Add(itemApi.Id);
                             atualizados++;
                         }
                     }
@@ -139,7 +145,7 @@ public class FortniteSyncService : IFortniteSyncService
             }
             
             await _dbContext.SaveChangesAsync();
-            _logger.LogInformation($"Loja atualizada: {atualizados} itens disponíveis para venda.");
+            _logger.LogInformation($"Loja atualizada: {atualizados} itens marcados como à venda.");
 
         }
         catch (Exception ex)
