@@ -14,7 +14,7 @@ public class Usuario
 
     [InverseProperty("Usuario")]
     public List<HistoricoTransacao> HistoricoTransacao { get; set; } = new();
-
+ 
     [InverseProperty("Usuario")]
     public List<ItemAdquirido>? ItemAdquirido { get; set; }
 }

@@ -34,8 +34,6 @@ public class CosmeticoApi_DTO
     [JsonPropertyName("added")]
     public DateTime dataInclusao { get; set; } = DateTime.Now;
 }
-
-// Classes auxiliares para mapear os objetos do JSON
 public class FortniteTypeInfo
 {
     [JsonPropertyName("displayValue")]
@@ -44,7 +42,6 @@ public class FortniteTypeInfo
     [JsonPropertyName("value")]
     public string? Value { get; set; }
 }
-
 public class FortniteImages
 {
     [JsonPropertyName("small")]
@@ -56,13 +53,11 @@ public class FortniteImages
     [JsonPropertyName("icon")]
     public string? Icon { get; set; }
 }
-
 public class FortniteSeriesInfo
 {
     [JsonPropertyName("value")]
     public string? Value { get; set; }
 }
-
 public class FortniteRarityInfo
 {
     [JsonPropertyName("displayValue")]
