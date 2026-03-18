@@ -36,6 +36,45 @@ class VitrineJS {
         return map;
     }
 
+    escapeHtml(value) {
+        const str = String(value ?? '');
+        return str.replace(/[&<>"']/g, (c) => {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            };
+            return map[c] || c;
+        });
+    }
+
+    sanitizeImageUrl(url) {
+        const str = String(url ?? '').trim();
+        if (!str) return '';
+
+        // Reject obviously dangerous characters to avoid breaking HTML attributes.
+        if (/[<>"'\s]/.test(str)) return '';
+
+        // Accept relative URLs and http(s) URLs only.
+        // Also reject protocol-relative URLs like `//evil.com/...`.
+        if (str.startsWith('//')) return '';
+        if (str.startsWith('/') || str.startsWith('./') || str.startsWith('../')) return str;
+
+        try {
+            const parsed = new URL(str, window.location.origin);
+            if (parsed.protocol === 'http:' || parsed.protocol === 'https:') return parsed.toString();
+        } catch (_) { /* ignore */ }
+
+        return '';
+    }
+
+    toNumber(value) {
+        const n = Number(value);
+        return Number.isFinite(n) ? n : 0;
+    }
+
     async init() {
         this.pegaElementos();
 
@@ -139,11 +178,13 @@ class VitrineJS {
     async verificaUsuario() {
         if (this.user) {
             const userName = localStorage.getItem('user_name') || 'Usuário';
-            if (this.myItemsTabContainer) this.myItemsTabContainer.style.display = 'block';
-            if (this.usersTabContainer) this.usersTabContainer.style.display = 'block';
+            if (this.myItemsTabContainer) this.myItemsTabContainer.classList.remove('d-none');
+            if (this.usersTabContainer) this.usersTabContainer.classList.remove('d-none');
+
+            const userNameSafe = this.escapeHtml(userName);
             this.navItens.innerHTML = `
                 <span class="nav-creditos d-flex align-items-center me-3 text-light">
-                    <i class="bi bi-person-circle me-2"></i> ${userName}
+                    <i class="bi bi-person-circle me-2"></i> ${userNameSafe}
                 </span>
                 <button id="nav-logout" class="btn btn-sm btn-logout">
                     <i class="bi bi-box-arrow-right"></i> Sair
@@ -314,11 +355,11 @@ class VitrineJS {
     }
 
     gerarHTMLVazio(msg) {
-        return `<div class="col-12 text-center py-5 text-muted"><p>${msg}</p></div>`;
+        return `<div class="col-12 text-center py-5 text-muted"><p>${this.escapeHtml(msg)}</p></div>`;
     }
 
     mostrarErro(msg, el) {
-        if(el) el.innerHTML = `<div class="col-12 text-center py-5 text-danger"><p>${msg}</p></div>`;
+        if(el) el.innerHTML = `<div class="col-12 text-center py-5 text-danger"><p>${this.escapeHtml(msg)}</p></div>`;
     }
 
     preencheCarrousel() {
@@ -340,22 +381,28 @@ class VitrineJS {
             div.className = `carousel-item ${index === 0 ? 'active' : ''}`;
             
             const corClass = `bg-rarity-${this.obterClasseRaridade(item.raridade)}`;
+
+            const safeImg = this.sanitizeImageUrl(item.urlImagem);
+            const safeNome = this.escapeHtml(item.nome);
+            const safeTipo = this.escapeHtml(item.tipo);
+            const safeRaridade = this.escapeHtml(item.raridade);
+            const precoSeguro = this.toNumber(item.preco);
             
             div.innerHTML = `
                 <div class="${corClass}" style="position: absolute; width:100%; height:100%; opacity: 0.6;"></div>
                 
                 <div style="position: absolute; width:100%; height:100%; display: flex; align-items: center; justify-content: center; z-index: 1;">
-                    <img src="${item.urlImagem}" style="height: 50%; object-fit: contain; filter: drop-shadow(0 0 30px rgba(0,0,0,0.6)); transform: scale(1.1);">
+                    <img src="${safeImg}" alt="${safeNome}" style="height: 50%; object-fit: contain; filter: drop-shadow(0 0 30px rgba(0,0,0,0.6)); transform: scale(1.1);">
                 </div>
 
                 <div class="carousel-caption d-flex flex-column justify-content-end p-5" style="z-index: 2; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);">
                     <span class="badge bg-warning text-dark mb-2 align-self-start shadow-sm">DESTAQUE</span>
-                    <h1 class="fw-bold display-4 text-uppercase" style="text-shadow: 2px 2px 10px rgba(0,0,0,0.8);">${item.nome}</h1>
-                    <p class="fs-4 text-white-50">${item.tipo} &bull; ${item.raridade}</p>
+                    <h1 class="fw-bold display-4 text-uppercase" style="text-shadow: 2px 2px 10px rgba(0,0,0,0.8);">${safeNome}</h1>
+                    <p class="fs-4 text-white-50">${safeTipo} &bull; ${safeRaridade}</p>
                     
                     <div class="d-flex align-items-center gap-3 mt-3">
                         <h2 class="m-0 text-warning fw-bold me-4" style="text-shadow: 0 0 10px rgba(255, 193, 7, 0.4);">
-                            ${item.preco} <small style="font-size: 0.5em;">V-Bucks</small>
+                            ${precoSeguro} <small style="font-size: 0.5em;">V-Bucks</small>
                         </h2>
                         <button class="btn btn-signup btn-lg px-4 shadow-lg btn-comprar-carrousel">
                             <i class="bi bi-cart-fill me-2"></i> Comprar
@@ -383,7 +430,7 @@ class VitrineJS {
     }
 
     alternarControlesCarrossel(show) {
-        if(this.carouselControlsContainer) this.carouselControlsContainer.style.display = show ? 'flex' : 'none';
+        if (this.carouselControlsContainer) this.carouselControlsContainer.classList.toggle('d-none', !show);
     }
 
     criarCard(item) {
@@ -405,25 +452,31 @@ class VitrineJS {
         // 2. Lógica Condicional para o Preço
         // Se não estiver à venda e não for adquirido, ocultamos o valor e o ícone de V-Bucks
         const vbucksIcon = `<span style="display:inline-flex; align-items:center; justify-content:center; width: 22px; height: 22px; background: #55cdfc; color: #fff; border-radius: 50%; font-size: 14px; font-weight: 900; border: 2px solid #fff; margin-left: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">V</span>`;
+        const safeImg = this.sanitizeImageUrl(item.urlImagem);
+        const safeNome = this.escapeHtml(item.nome);
+        const safeTipo = this.escapeHtml(item.tipo);
+        const safeRaridade = this.escapeHtml(item.raridade);
+        const raridadeUpper = this.escapeHtml((item.raridade || '').toUpperCase());
+        const precoSeguro = this.toNumber(item.preco);
         
         const precoHTML = (item.isForSale || item.isAdquirido) 
-            ? `<span class="product-price d-flex align-items-center">${item.preco} ${vbucksIcon}</span>`
+            ? `<span class="product-price d-flex align-items-center">${precoSeguro} ${vbucksIcon}</span>`
             : `<span class="text-muted opacity-50" style="font-size: 0.9rem; font-weight: 700;">INDISPONÍVEL</span>`;
 
         col.innerHTML = `
             <div class="product-card d-flex flex-column h-100">
                 <div class="product-image ${raridadeClass}">
-                    <img src="${item.urlImagem}" alt="${item.nome}" loading="lazy">
+                    <img src="${safeImg}" alt="${safeNome}" loading="lazy">
                     <div style="position: absolute; top: 12px; left: 12px; display: flex;">
                         ${forSaleBadge} ${adquiridoBadge}
                     </div>
                 </div>
                 <div class="card-body">
-                    <h5 class="product-name text-truncate" title="${item.nome}">${item.nome}</h5>
-                    <p class="product-type mb-auto">${item.tipo}</p>
+                    <h5 class="product-name text-truncate" title="${safeNome}">${safeNome}</h5>
+                    <p class="product-type mb-auto">${safeTipo}</p>
                     <div class="d-flex justify-content-between align-items-end mt-4 pt-3" style="border-top: 1px solid rgba(255,255,255,0.05);">
                         <span class="${raridadeClass}" style="color: #fff; font-size: 0.75rem; font-weight: 800; padding: 4px 12px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.4); letter-spacing: 0.5px;">
-                            ${item.raridade.toUpperCase()}
+                            ${raridadeUpper}
                         </span>
                         ${precoHTML}
                     </div>
@@ -439,10 +492,16 @@ class VitrineJS {
         if(!this.itemModalElement) return;
         
         const vbucksIcon = `<span style="display:inline-block; width: 24px; height: 24px; background: #55cdfc; color: #fff; border-radius: 50%; text-align: center; line-height: 24px; font-size: 14px; font-weight: bold; border: 2px solid #fff; margin-left: 8px; box-shadow: 0 0 8px rgba(85,205,252,0.5);">V</span>`;
+        const btnBuy = document.getElementById('btn-buy');
+        const btnDevolver = document.getElementById('btn-devolver');
+        const safeImg = this.sanitizeImageUrl(item.urlImagem);
+        const safeNome = this.escapeHtml(item.nome);
+        const safeRaridade = this.escapeHtml(item.raridade);
+        const precoSeguro = this.toNumber(item.preco);
 
         document.getElementById('modal-item-name').textContent = item.nome;
         document.getElementById('modal-item-type').textContent = item.tipo;
-        document.getElementById('modal-item-price').innerHTML = `${item.preco} ${vbucksIcon}`;
+        document.getElementById('modal-item-price').innerHTML = `${precoSeguro} ${vbucksIcon}`;
         document.getElementById('modal-item-description').textContent = item.descricao || "Sem descrição disponível.";
         
         document.getElementById('modal-detail-rarity').textContent = item.raridade;
@@ -454,12 +513,12 @@ class VitrineJS {
         imgContainer.classList.add(`bg-rarity-${this.obterClasseRaridade(item.raridade)}`);
         
         imgContainer.innerHTML = `
-            <img src="${item.urlImagem}" alt="${item.nome}">
+            <img src="${safeImg}" alt="${safeNome}">
             <div class="item-modal-badges">
                 ${item.isNew ? '<span class="badge badge-new">Novo</span>' : ''}
             </div>
             <div class="item-modal-rarity">
-                <span class="badge bg-dark border border-light">${item.raridade}</span>
+                <span class="badge bg-dark border border-light">${safeRaridade}</span>
             </div>
         `;
 
@@ -475,24 +534,24 @@ class VitrineJS {
             availIcon.className = 'bi bi-check-circle-fill';
             availTitle.textContent = 'Adquirido';
             availText.textContent = 'Este item já está na sua coleção.';
-            document.getElementById('btn-buy').style.display = 'none';
-            document.getElementById('btn-devolver').style.display = 'flex';
+            if (btnBuy) btnBuy.classList.add('d-none');
+            if (btnDevolver) btnDevolver.classList.remove('d-none');
         } 
         else if (item.isForSale) {
             availabilityDiv.classList.add('status-disponivel');
             availIcon.className = 'bi bi-cart-check-fill';
             availTitle.textContent = 'Disponível';
             availText.textContent = 'Aproveite enquanto está na loja!';
-            document.getElementById('btn-buy').style.display = 'flex';
-            document.getElementById('btn-devolver').style.display = 'none';
+            if (btnBuy) btnBuy.classList.remove('d-none');
+            if (btnDevolver) btnDevolver.classList.add('d-none');
         } 
         else {
             availabilityDiv.classList.add('status-indisponivel');
             availIcon.className = 'bi bi-lock-fill';
             availTitle.textContent = 'Indisponível';
             availText.textContent = 'Este item não pode ser comprado no momento.';
-            document.getElementById('btn-buy').style.display = 'none';
-            document.getElementById('btn-devolver').style.display = 'none';
+            if (btnBuy) btnBuy.classList.add('d-none');
+            if (btnDevolver) btnDevolver.classList.add('d-none');
         }
 
         const modal = new bootstrap.Modal(this.itemModalElement);
@@ -548,8 +607,10 @@ class ValidadorItem {
     validaDados() {
         const nomeValido = (this.raw.name && this.raw.name !== "null") ? this.raw.name : 'Sem Nome';
 
-        const precoItem = this.raw.price || 0;
-        const estaNaLoja = (this.raw.isForSale === true) || (precoItem > 0);
+        const precoRaw = this.raw.price;
+        const precoItem = Number(precoRaw);
+        const precoSeguro = Number.isFinite(precoItem) ? precoItem : 0;
+        const estaNaLoja = (this.raw.isForSale === true) || (precoSeguro > 0);
 
         return {
             id: this.raw.id || '',
@@ -558,7 +619,7 @@ class ValidadorItem {
             tipo: this.raw.type?.displayValue || 'Cosmético',
             raridade: this.raw.rarity?.displayValue || 'Comum',
             urlImagem: this.raw.images?.icon || this.raw.images?.small || this.raw.images?.large || '',
-            preco: precoItem,
+            preco: precoSeguro,
             dataInclusao: this.raw.added || new Date().toISOString(),
             isNew: this.raw.isNew || false, 
             

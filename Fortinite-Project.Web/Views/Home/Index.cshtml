@@ -1,4 +1,4 @@
-﻿@{
+@{
     ViewData["Title"] = "Loja Oficial";
 }
 
@@ -9,12 +9,12 @@
         <div class="carousel-inner" id="carouselItems">
             <div class="text-center py-5">
                 <div class="spinner-border text-light" role="status"></div>
-                <p class="text-muted mt-2">Carregando destaques...</p>
+                <p class="text-muted mt-2" aria-live="polite" aria-atomic="true">Carregando destaques...</p>
             </div>
         </div>
     </div>
 
-    <div id="carousel-external-controls" class="d-flex justify-content-center align-items-center gap-3 mt-4" style="display: none;">
+    <div id="carousel-external-controls" class="d-flex justify-content-center align-items-center gap-3 mt-4 d-none">
         <button class="btn-external-nav" type="button" data-bs-target="#featuredCarousel" data-bs-slide="prev">
             <i class="bi bi-chevron-left"></i>
         </button>
@@ -25,22 +25,22 @@
 
     <ul class="nav nav-tabs nav-tabs-custom justify-content-center mt-5" id="shopTabs" role="tablist">
         <li class="nav-item">
-            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#shop-content">
+            <button class="nav-link active" id="shop-tab" role="tab" aria-selected="true" data-bs-toggle="tab" data-bs-target="#shop-content" aria-controls="shop-content">
                 <i class="bi bi-cart3"></i> Loja
             </button>
         </li>
-        <li class="nav-item" id="my-items-tab-container" style="display: none;">
-            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#my-items-content">
+        <li class="nav-item d-none" id="my-items-tab-container">
+            <button class="nav-link" id="my-items-tab" role="tab" aria-selected="false" data-bs-toggle="tab" data-bs-target="#my-items-content" aria-controls="my-items-content">
                 <i class="bi bi-collection-fill"></i> Meus Itens
             </button>
         </li>
         <li class="nav-item">
-            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#all-items-content">
+            <button class="nav-link" id="all-items-tab" role="tab" aria-selected="false" data-bs-toggle="tab" data-bs-target="#all-items-content" aria-controls="all-items-content">
                 <i class="bi bi-grid-3x3-gap"></i> Catálogo Completo
             </button>
         </li>
-        <li class="nav-item" id="users-tab-container" style="display: none;">
-            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#users-content">
+        <li class="nav-item d-none" id="users-tab-container">
+            <button class="nav-link" id="users-tab" role="tab" aria-selected="false" data-bs-toggle="tab" data-bs-target="#users-content" aria-controls="users-content">
                 <i class="bi bi-people"></i> Usuários
             </button>
         </li>
@@ -99,8 +99,8 @@
             <div class="modal-body">
                 <div class="item-modal-image" id="modal-item-image">
                     <div class="item-modal-badges">
-                        <span class="badge bg-primary" id="modal-item-badge-new" style="display: none;"></span>
-                        <span class="badge bg-success" id="modal-item-badge-sale" style="display: none;"></span>
+                        <span class="badge bg-primary d-none" id="modal-item-badge-new"></span>
+                        <span class="badge bg-success d-none" id="modal-item-badge-sale"></span>
                     </div>
                     <div class="item-modal-rarity">
                         <span class="badge" id="modal-item-rarity"></span>
@@ -153,10 +153,10 @@
             </div>
             <div class="modal-footer">
                 <div class="item-actions w-100">
-                    <button type="button" class="btn-buy-item" id="btn-buy">
+                    <button type="button" class="btn-buy-item d-flex" id="btn-buy">
                         <i class="bi bi-cart-plus"></i> <span>Comprar Agora</span>
                     </button>
-                    <button type="button" class="btn-devolver-item" id="btn-devolver" style="display: none;">
+                    <button type="button" class="btn-devolver-item d-flex d-none" id="btn-devolver">
                         <i class="bi bi-arrow-counterclockwise"></i> <span>Devolver</span>
                     </button>
                 </div>
@@ -194,7 +194,7 @@
                 <div class="profile-info-section">
                     <ul class="nav nav-tabs profile-modal-tabs" id="profileTabs" role="tablist">
                         <li class="nav-item">
-                            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#profile-tab-items">
+                            <button class="nav-link active" id="profile-tab-items-btn" role="tab" aria-selected="true" data-bs-toggle="tab" data-bs-target="#profile-tab-items" aria-controls="profile-tab-items">
                                 <i class="bi bi-box-seam"></i> Inventário
                             </button>
                         </li>
@@ -216,21 +216,29 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             try {
-                if (typeof localStorageManager !== 'undefined') {
+                const userToken =
+                    (typeof localStorageManager !== 'undefined' &&
+                        typeof localStorageManager.getToken === 'function')
+                        ? localStorageManager.getToken()
+                        : null;
 
-                    const user = localStorageManager.getToken(); 
-                    console.log("Index iniciando com usuário:", user);
-                    
-                    if (typeof VitrineJS !== 'undefined') {
-                        const minhaVitrine = new VitrineJS(user);
-                    } else {
-                        console.error("Erro: Classe VitrineJS não encontrada.");
-                    }
-                } else {
-                    console.warn("localStorageManager não definido. Verifique perfil.js no Layout.");
+                if (typeof VitrineJS === 'undefined') {
+                    throw new Error("Classe VitrineJS não encontrada.");
                 }
+
+                // Inicializa a vitrine com token (ou null, se não estiver logado).
+                new VitrineJS(userToken);
             } catch (e) {
                 console.error("Erro ao inicializar Home:", e);
+                const target =
+                    document.getElementById('shop-grid') ||
+                    document.getElementById('all-items-grid') ||
+                    document.getElementById('my-items-grid');
+
+                if (target) {
+                    target.innerHTML =
+                        '<div class="col-12 text-center py-5 text-danger"><p>Falha ao inicializar a loja. Recarregue a página.</p></div>';
+                }
             }
         });
     </script>
