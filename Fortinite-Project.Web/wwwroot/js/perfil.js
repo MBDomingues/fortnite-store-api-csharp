@@ -8,6 +8,8 @@ class AuthManager {
         this.errorElement = document.getElementById('error-message');
         this.alertErrorBox = document.getElementById('alert-error');
 
+        this.buttonOriginalHtml = new Map();
+
         this.initEvents();
     }
 
@@ -35,14 +37,19 @@ class AuthManager {
         const confirmPassInput = document.getElementById('confirm-password');
         const termsInput = document.getElementById('terms');
 
-        const name = nameInput.value.trim();
-        const email = emailInput.value.trim();
-        const password = passInput.value.trim();
-        const confirmPassword = confirmPassInput.value.trim();
+        const name = nameInput?.value.trim() || '';
+        const email = emailInput?.value.trim() || '';
+        const password = passInput?.value.trim() || '';
+        const confirmPassword = confirmPassInput?.value.trim() || '';
 
         // Validação básica
         if (!name || !email || !password) {
             this.showError('Preencha todos os campos obrigatórios.');
+            return;
+        }
+
+        if (!this.isValidEmail(email)) {
+            this.showError('Informe um e-mail válido.');
             return;
         }
 
@@ -51,7 +58,7 @@ class AuthManager {
             return;
         }
 
-        if (!termsInput.checked) {
+        if (termsInput && !termsInput.checked) {
             this.showError('Você precisa aceitar os termos.');
             return;
         }
@@ -82,8 +89,8 @@ class AuthManager {
             }
 
             if (result.data && result.data.token) {
-                localStorageManager.saveToken(result.data.token);
-                localStorage.setItem('user_name', result.data.nome);
+                LocalStorageManager.saveAuthData(result.data.token, result.data.nome);
+                
                 await Swal.fire({
                     icon: 'success',
                     title: 'Bem-vindo!',
@@ -99,7 +106,7 @@ class AuthManager {
             console.error('Erro Cadastro:', error);
             this.showError(error.message);
         } finally {
-            this.setLoading(false, this.registerButton, 'Criar Conta');
+            this.setLoading(false, this.registerButton);
         }
     }
 
@@ -108,8 +115,8 @@ class AuthManager {
         const emailInput = document.getElementById('email');
         const passInput = document.getElementById('password');
 
-        const email = emailInput.value.trim();
-        const password = passInput.value.trim();
+        const email = emailInput?.value.trim() || '';
+        const password = passInput?.value.trim() || '';
 
         if (!email || !password) {
             this.showError('Informe email e senha.');
@@ -141,9 +148,7 @@ class AuthManager {
             }
 
             if (result.data && result.data.token) {
-                localStorageManager.saveToken(result.data.token);
-                
-                localStorage.setItem('user_name', result.data.nome);
+                LocalStorageManager.saveAuthData(result.data.token, result.data.nome);
                 
                 window.location.href = '/Home/Index';
             } else {
@@ -154,19 +159,27 @@ class AuthManager {
             console.error('Erro Login:', error);
             this.showError(error.message);
         } finally {
-            this.setLoading(false, this.loginButton, 'Entrar');
+            this.setLoading(false, this.loginButton);
         }
     }
 
-    setLoading(isLoading, button, originalText) {
+    isValidEmail(email) {
+        const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return regex.test(email);
+    }
+
+    setLoading(isLoading, button) {
         if (!button) return;
         if (isLoading) {
+            this.buttonOriginalHtml.set(button, button.innerHTML);
             button.disabled = true;
             button.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processando...';
             this.hideError();
         } else {
             button.disabled = false;
-            button.innerHTML = originalText;
+            if (this.buttonOriginalHtml.has(button)) {
+                button.innerHTML = this.buttonOriginalHtml.get(button);
+            }
         }
     }
 
@@ -186,9 +199,10 @@ class AuthManager {
     }
 }
 
-class localStorageManager {
-    static saveToken(token) {
+class LocalStorageManager {
+    static saveAuthData(token, userName) {
         localStorage.setItem('jwt_token', token);
+        localStorage.setItem('user_name', userName);
     }
     static getToken() {
         return localStorage.getItem('jwt_token');

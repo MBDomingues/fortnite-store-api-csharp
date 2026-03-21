@@ -192,7 +192,7 @@ class VitrineJS {
             `;
             
             document.getElementById('nav-logout')?.addEventListener('click', () => {
-                localStorageManager.removeToken();
+                LocalStorageManager.removeToken();
                 window.location.href = '/Home/Login';
             });
         }
@@ -545,7 +545,7 @@ class VitrineJS {
             if (btnBuy) btnBuy.classList.remove('d-none');
             if (btnDevolver) btnDevolver.classList.add('d-none');
         } 
-        else {
+        else {      
             availabilityDiv.classList.add('status-indisponivel');
             availIcon.className = 'bi bi-lock-fill';
             availTitle.textContent = 'Indisponível';
