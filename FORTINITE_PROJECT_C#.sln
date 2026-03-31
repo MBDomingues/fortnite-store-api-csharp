@@ -1,19 +1,46 @@
+﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.2.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fortinite-Project.Web", "Fortinite-Project.Web\Fortinite-Project.Web.csproj", "{ACFC7E93-74B0-CA7D-785C-51D427522489}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fortnite.Tests", "Fortnite.Tests\Fortnite.Tests.csproj", "{D649CC6E-D255-4A0D-B6D3-D0D1A2C7B10F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
 		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{ACFC7E93-74B0-CA7D-785C-51D427522489}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{ACFC7E93-74B0-CA7D-785C-51D427522489}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ACFC7E93-74B0-CA7D-785C-51D427522489}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{ACFC7E93-74B0-CA7D-785C-51D427522489}.Debug|x64.Build.0 = Debug|Any CPU
+		{ACFC7E93-74B0-CA7D-785C-51D427522489}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{ACFC7E93-74B0-CA7D-785C-51D427522489}.Debug|x86.Build.0 = Debug|Any CPU
 		{ACFC7E93-74B0-CA7D-785C-51D427522489}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{ACFC7E93-74B0-CA7D-785C-51D427522489}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ACFC7E93-74B0-CA7D-785C-51D427522489}.Release|x64.ActiveCfg = Release|Any CPU
+		{ACFC7E93-74B0-CA7D-785C-51D427522489}.Release|x64.Build.0 = Release|Any CPU
+		{ACFC7E93-74B0-CA7D-785C-51D427522489}.Release|x86.ActiveCfg = Release|Any CPU
+		{ACFC7E93-74B0-CA7D-785C-51D427522489}.Release|x86.Build.0 = Release|Any CPU
+		{D649CC6E-D255-4A0D-B6D3-D0D1A2C7B10F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D649CC6E-D255-4A0D-B6D3-D0D1A2C7B10F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D649CC6E-D255-4A0D-B6D3-D0D1A2C7B10F}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{D649CC6E-D255-4A0D-B6D3-D0D1A2C7B10F}.Debug|x64.Build.0 = Debug|Any CPU
+		{D649CC6E-D255-4A0D-B6D3-D0D1A2C7B10F}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{D649CC6E-D255-4A0D-B6D3-D0D1A2C7B10F}.Debug|x86.Build.0 = Debug|Any CPU
+		{D649CC6E-D255-4A0D-B6D3-D0D1A2C7B10F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D649CC6E-D255-4A0D-B6D3-D0D1A2C7B10F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D649CC6E-D255-4A0D-B6D3-D0D1A2C7B10F}.Release|x64.ActiveCfg = Release|Any CPU
+		{D649CC6E-D255-4A0D-B6D3-D0D1A2C7B10F}.Release|x64.Build.0 = Release|Any CPU
+		{D649CC6E-D255-4A0D-B6D3-D0D1A2C7B10F}.Release|x86.ActiveCfg = Release|Any CPU
+		{D649CC6E-D255-4A0D-B6D3-D0D1A2C7B10F}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -15,15 +15,14 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0-preview AS final
 WORKDIR /app
 EXPOSE 8080
 
-# Configuração da pasta do SQLite como Root
+# Configuração da pasta do SQLite
 USER root
-RUN mkdir -p /app/data && chmod 777 /app/data
+RUN mkdir -p /app/data && chown -R app:app /app/data # Muda o dono para o usuário 'app'
 
-# Copia os arquivos compilados do estágio de build
+# Copia os arquivos compilados
 COPY --from=build /app/publish .
 
-# Define o usuário padrão do .NET (usuário não-root por segurança)
+# Define o usuário padrão (Agora o 'app' tem permissão na pasta 'data')
 USER app
 
-# O nome da DLL deve ser idêntico ao do seu .csproj
 ENTRYPOINT ["dotnet", "Fortinite-Project.Web.dll"]
