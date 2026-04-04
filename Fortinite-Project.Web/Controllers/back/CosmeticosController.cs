@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Fortinite_Project.Web.Data;
-using Fortinite_Project.Web.Models;
 using Fortinite_Project.Web.DTOs;
 
 namespace Fortinite_Project.Web.Controllers;

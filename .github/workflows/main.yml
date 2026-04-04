@@ -1,0 +1,48 @@
+name: CI/CD Pipeline - Fortnite Store
+
+on:
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout do Código
+      uses: actions/checkout@v4
+
+    - name: Setup .NET 10
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '10.0.x'
+        include-prerelease: true
+
+    - name: Restaurar Dependências
+      run: dotnet restore
+
+    - name: Build da Aplicação
+      run: dotnet build --no-restore --configuration Release
+
+    - name: Executar Testes Unitários
+      run: dotnet test --no-build --verbosity normal
+
+  deploy-staging:
+    name: Deploy to Staging
+    needs: build-and-test
+    if: github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    steps:
+    - name: Deploy Staging
+      run: echo "Efetuando deploy simulado em STAGING..."
+
+  deploy-production:
+    name: Deploy to Production
+    needs: build-and-test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+    - name: Deploy Production
+      run: echo "Efetuando deploy simulado em PRODUÇÃO..."
