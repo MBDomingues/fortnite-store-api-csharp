@@ -22,11 +22,30 @@ namespace Fortnite.Tests
         [Fact]
         public async Task GetLojaDiaria_DeveRetornarApenasItensAVenda()
         {
+            // Arrange
             var context = GetInMemoryDatabaseContext();
             context.Cosmeticos.AddRange(new List<Cosmetico>
             {
-                new Cosmetico { Id = "1", Nome = "Skin A", isForSale = true, Raridade = "Lendária" },
-                new Cosmetico { Id = "2", Nome = "Skin B", isForSale = false, Raridade = "Comum" }
+                new Cosmetico 
+                { 
+                    Id = "1", 
+                    Nome = "Skin A", 
+                    isForSale = true, 
+                    Raridade = "Lendária",
+                    Descricao = "Descrição Teste A",
+                    Tipo = "Outfit",               
+                    UrlImagem = "http://imagem.com" 
+                },
+                new Cosmetico 
+                { 
+                    Id = "2", 
+                    Nome = "Skin B", 
+                    isForSale = false, 
+                    Raridade = "Comum",
+                    Descricao = "Descrição Teste B",
+                    Tipo = "Pickaxe",               
+                    UrlImagem = "http://imagem.com"
+                }
             });
             await context.SaveChangesAsync();
 
