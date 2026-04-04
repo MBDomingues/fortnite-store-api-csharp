@@ -23,11 +23,11 @@ jobs:
     - name: Restaurar Dependências
       run: dotnet restore
 
-    - name: Build da Aplicação
+    - name: Build da Aplicaçãoßß
       run: dotnet build --no-restore --configuration Release
 
     - name: Executar Testes Unitários
-      run: dotnet test --no-build --verbosity normal
+      run: dotnet test Fortnite.Tests/Fortnite.Tests.csproj --configuration Release --verbosity normal
 
   deploy-staging:
     name: Deploy to Staging
